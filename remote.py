@@ -46,6 +46,8 @@ if DRY:
         print("[dry]", *a, flush=True)
 
     def key_combo(keys): _log("key", keys)
+    def key_down(k): _log("key DOWN", k)
+    def key_up(k): _log("key UP", k)
     def mouse_move(dx, dy): _log("move", dx, dy)
     def mouse_button(flag): _log("mouse button flag", hex(flag))
     def mouse_wheel(delta): _log("wheel", delta)
@@ -84,6 +86,14 @@ else:
             user32.keybd_event(vk, user32.MapVirtualKeyW(vk, 0), ext, 0)
         for vk, ext in reversed(codes):
             user32.keybd_event(vk, user32.MapVirtualKeyW(vk, 0), ext | KEYUP, 0)
+
+    def key_down(k):
+        vk = VK[k]
+        user32.keybd_event(vk, user32.MapVirtualKeyW(vk, 0), EXT if k in EXTENDED else 0, 0)
+
+    def key_up(k):
+        vk = VK[k]
+        user32.keybd_event(vk, user32.MapVirtualKeyW(vk, 0), (EXT if k in EXTENDED else 0) | KEYUP, 0)
 
     def mouse_move(dx, dy):
         user32.mouse_event(0x0001, dx & 0xFFFFFFFF, dy & 0xFFFFFFFF, 0, 0)
@@ -155,7 +165,11 @@ SYS = {  # work in every mode
     "nexttab": K("CTRL", "TAB"), "prevtab": K("CTRL", "SHIFT", "TAB"),
     "addr": K("CTRL", "L"), "refresh": K("F5"), "win": K("WIN"),
     "desktop": K("WIN", "D"), "altf4": K("ALT", "F4"), "space": K("SPACE"),
+    "taskview": K("WIN", "TAB"),
 }
+
+for _n in "123456789":          # Win+1 ... Win+9 = Nth taskbar icon
+    SYS["app" + _n] = K("WIN", _n)
 
 YT = {
     "back10": K("J"), "fwd10": K("L"), "back5": K("LEFT"), "fwd5": K("RIGHT"),
@@ -267,7 +281,7 @@ textarea,input{width:100%;background:#0a0a0a;border:1px solid var(--line);border
   <div class="row c4 fix">
     <button data-k="cc"><b>CC</b></button>
     <button data-k="esc"><b>Esc</b></button>
-    <button data-k="alttab"><b>Switch</b></button>
+    <button data-k="alttab"><b>Last app</b><i>Alt+Tab</i></button>
     <button data-k="mediaplay"><b>Any app</b><i>play/pause</i></button>
   </div>
   <div class="yt-only"><div class="cap">Jump to position (0 = start, 5 = halfway)</div>
@@ -277,6 +291,25 @@ textarea,input{width:100%;background:#0a0a0a;border:1px solid var(--line);border
       <button data-k="j6"><b>6</b></button><button data-k="j7"><b>7</b></button><button data-k="j8"><b>8</b></button>
       <button data-k="j9"><b>9</b></button>
     </div></div>
+</section>
+
+<section class="tab" id="t-apps">
+  <div class="cap">Taskbar apps: Win + number = the Nth icon on your taskbar (1 = first)</div>
+  <div class="row c3" style="grid-auto-rows:64px;flex:none">
+    <button data-k="app1"><b>1</b></button><button data-k="app2"><b>2</b></button><button data-k="app3"><b>3</b></button>
+    <button data-k="app4"><b>4</b></button><button data-k="app5"><b>5</b></button><button data-k="app6"><b>6</b></button>
+    <button data-k="app7"><b>7</b></button><button data-k="app8"><b>8</b></button><button data-k="app9"><b>9</b></button>
+  </div>
+  <div class="cap">Window switcher: tap Next until the window you want is highlighted on your screen, then tap Go</div>
+  <div class="row c3 fix">
+    <button data-w="prev"><b>&#9664; Prev</b></button>
+    <button data-w="next"><b>Next &#9654;</b></button>
+    <button data-w="go" class="primary"><b>Go</b></button>
+  </div>
+  <div class="row c2 fix">
+    <button data-k="taskview"><b>Task view</b><i>then arrows + OK</i></button>
+    <button data-w="cancel"><b>Cancel</b></button>
+  </div>
 </section>
 
 <section class="tab" id="t-mouse">
@@ -322,6 +355,7 @@ textarea,input{width:100%;background:#0a0a0a;border:1px solid var(--line);border
 <div id="msg"></div>
 <nav>
   <button data-tab="media"><b>&#9654;</b>Media</button>
+  <button data-tab="apps"><b>&#9776;</b>Apps</button>
   <button data-tab="mouse"><b>&#9728;</b>Mouse</button>
   <button data-tab="keys"><b>&#9000;</b>Keys</button>
   <button data-tab="power"><b>&#9211;</b>Power</button>
@@ -356,6 +390,7 @@ $$('[data-k]').forEach(b=>{
   if(b.dataset.confirm){b.onclick=()=>{if(confirm(b.dataset.confirm))go()}}
   else hold(b,go,b.hasAttribute('data-rep'));
 });
+$$('[data-w]').forEach(b=>hold(b,()=>api({cmd:'switch',act:b.dataset.w}),false));
 $$('[data-c]').forEach(b=>hold(b,()=>api({cmd:'click',b:b.dataset.c}),false));
 $$('[data-s]').forEach(b=>hold(b,()=>api({cmd:'scroll',dy:+b.dataset.s}),true));
 $$('[data-p]').forEach(b=>b.onclick=()=>{if(b.dataset.confirm&&!confirm(b.dataset.confirm))return;vib();api({cmd:'power',act:b.dataset.p})});
@@ -436,9 +471,64 @@ def num(v, lo, hi):
         return 0
 
 
+# Window switcher: holds Alt down between taps so Tab can cycle through ALL windows.
+SWITCH = {"held": False, "timer": None}
+
+
+def release_alt():
+    t = SWITCH["timer"]
+    if t:
+        t.cancel()
+        SWITCH["timer"] = None
+    if SWITCH["held"]:
+        SWITCH["held"] = False
+        key_up("ALT")
+
+
+def _auto_release():            # safety: never leave Alt stuck down
+    with LOCK:
+        release_alt()
+
+
+def arm_switch_timer():
+    if SWITCH["timer"]:
+        SWITCH["timer"].cancel()
+    t = threading.Timer(10, _auto_release)
+    t.daemon = True
+    t.start()
+    SWITCH["timer"] = t
+
+
+import atexit
+atexit.register(release_alt)
+
+
 def dispatch(d):
     cmd = d.get("cmd")
     with LOCK:
+        if cmd != "switch":
+            release_alt()       # any other action confirms the choice and frees Alt
+        if cmd == "switch":
+            act = d.get("act")
+            if act in ("next", "prev"):
+                if not SWITCH["held"]:
+                    key_down("ALT")
+                    SWITCH["held"] = True
+                if act == "prev":
+                    key_down("SHIFT"); key_combo(["TAB"]); key_up("SHIFT")
+                else:
+                    key_combo(["TAB"])
+                arm_switch_timer()
+                return True
+            if act == "go":
+                release_alt()
+                return True
+            if act == "cancel":
+                if SWITCH["held"]:
+                    key_combo(["ESC"])
+                    release_alt()
+                return True
+            return False
         if cmd == "key":
             combos = ACTIONS.get(d.get("mode"), {}).get(d.get("act")) or SYS.get(d.get("act"))
             if not combos:
