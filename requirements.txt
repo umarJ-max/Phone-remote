@@ -1,0 +1,6 @@
+# No third-party packages are needed.
+# remote.py uses only the Python standard library.
+#
+# Requirements:
+#   - Windows 10 or 11
+#   - Python 3.8 or newer
