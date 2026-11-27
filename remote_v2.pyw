@@ -18,7 +18,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-PIN = os.environ.get("REMOTE_PIN", "5567")   # <-- change this
+PIN = os.environ.get("REMOTE_PIN", "1234")   # <-- change this
 PORT = int(os.environ.get("REMOTE_PORT", "8765"))
 DRY = os.environ.get("REMOTE_DRY") == "1"     # test mode: prints instead of pressing keys
 
