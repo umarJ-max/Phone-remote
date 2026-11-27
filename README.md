@@ -10,7 +10,8 @@ One Python file. No installs. Dark interface that is easy on the eyes at night.
 - **Media:** big -10s / +10s buttons, 5s and 1 min skips, play/pause, volume, mute, fullscreen, next/prev, playback speed, subtitles. Hold a button to repeat it.
 - **YouTube / VLC switch:** the same buttons send the right keys for each player.
 - **Mouse:** a touchpad on your phone (move, tap to click, two-finger scroll, two-finger tap for right click, drag).
-- **Keys:** type text from your phone, arrow keys, Esc, Tab, Alt+Tab, new/close tab, address bar, refresh and more.
+- **Keys:** type text from your phone, arrow keys, Esc, Tab, previous/next/new/close browser tab, address bar, refresh, show desktop (`Win+D`), Start menu. Window switching (`Alt+Tab`) is on the Media tab.
+- **"Any app" button:** the global play/pause media key. It controls whatever is playing, even if its window is not in front.
 - **Power:** lock, screen off, shutdown in 1 minute (with confirmation and cancel).
 - **PIN protection:** the phone asks for the PIN once, five wrong tries lock that device for a minute, and only devices on your local network can connect.
 
