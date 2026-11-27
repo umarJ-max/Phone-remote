@@ -152,8 +152,9 @@ SYS = {  # work in every mode
     "up": K("UP"), "down": K("DOWN"), "left": K("LEFT"), "right": K("RIGHT"),
     "enter": K("ENTER"), "esc": K("ESC"), "back": K("BACK"), "tab": K("TAB"),
     "alttab": K("ALT", "TAB"), "closetab": K("CTRL", "W"), "newtab": K("CTRL", "T"),
-    "addr": K("CTRL", "L"), "refresh": K("F5"), "f11": K("F11"), "win": K("WIN"),
-    "slash": K("SLASH"), "altf4": K("ALT", "F4"), "space": K("SPACE"),
+    "nexttab": K("CTRL", "TAB"), "prevtab": K("CTRL", "SHIFT", "TAB"),
+    "addr": K("CTRL", "L"), "refresh": K("F5"), "win": K("WIN"),
+    "desktop": K("WIN", "D"), "altf4": K("ALT", "F4"), "space": K("SPACE"),
 }
 
 YT = {
@@ -267,7 +268,7 @@ textarea,input{width:100%;background:#0a0a0a;border:1px solid var(--line);border
     <button data-k="cc"><b>CC</b></button>
     <button data-k="esc"><b>Esc</b></button>
     <button data-k="alttab"><b>Switch</b></button>
-    <button data-k="mediaplay"><b>Any&#9199;</b></button>
+    <button data-k="mediaplay"><b>Any app</b><i>play/pause</i></button>
   </div>
   <div class="yt-only"><div class="cap">Jump to position (0 = start, 5 = halfway)</div>
     <div class="row c10 fix" style="height:44px">
@@ -302,9 +303,9 @@ textarea,input{width:100%;background:#0a0a0a;border:1px solid var(--line);border
   </div>
   <div class="row c3" style="grid-auto-rows:48px;flex:none">
     <button data-k="esc"><b>Esc</b></button><button data-k="back" data-rep><b>Backspace</b></button><button data-k="tab"><b>Tab</b></button>
-    <button data-k="alttab"><b>Alt+Tab</b></button><button data-k="closetab"><b>Close tab</b></button><button data-k="newtab"><b>New tab</b></button>
-    <button data-k="addr"><b>Address bar</b></button><button data-k="refresh"><b>Refresh</b></button><button data-k="f11"><b>F11</b></button>
-    <button data-k="slash"><b>/ Search</b></button><button data-k="win"><b>Start</b></button>
+    <button data-k="prevtab"><b>Prev tab</b></button><button data-k="nexttab"><b>Next tab</b></button><button data-k="newtab"><b>New tab</b></button>
+    <button data-k="closetab"><b>Close tab</b></button><button data-k="addr"><b>Address bar</b></button><button data-k="refresh"><b>Refresh</b></button>
+    <button data-k="desktop"><b>Show desktop</b></button><button data-k="win"><b>Start</b></button>
     <button data-k="altf4" data-confirm="Close the active window?" class="danger"><b>Alt+F4</b></button>
   </div>
 </section>
