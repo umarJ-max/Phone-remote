@@ -1,9 +1,11 @@
 """
-Phone remote for YouTube, VLC and your whole laptop (Windows). No installs needed.
+Phone Remote - V1 (console version)
+Control YouTube, VLC and your whole Windows laptop from your phone. No installs needed.
 
-Run:   python remote.py
+Run:   python remote_v1.py
 Then open the printed address on your phone (same Wi-Fi).
-Change PIN below before first use.
+Set your PIN with the REMOTE_PIN environment variable, or edit PIN below.
+Stop with Ctrl+C, or Power > Stop remote on the phone.
 """
 import ctypes
 import hmac
@@ -348,6 +350,7 @@ textarea,input{width:100%;background:#0a0a0a;border:1px solid var(--line);border
   <button data-p="screenoff"><b>Turn screen off</b><i>(touch the touchpad to wake)</i></button>
   <button data-p="shutdown" data-confirm="Shut down the laptop in 60 seconds?" class="danger"><b>Shut down in 1 min</b></button>
   <button data-p="cancel"><b>Cancel shutdown</b></button>
+  <button data-p="quit" data-confirm="Stop the remote on the laptop? You will have to start it again from the laptop." class="danger"><b>Stop remote</b><i>(closes this program on the laptop)</i></button>
   <button id="forget"><b>Forget PIN on this phone</b><i>(you will be asked for it again)</i></button>
 </section>
 </main>
@@ -501,6 +504,14 @@ def arm_switch_timer():
 
 import atexit
 atexit.register(release_alt)
+
+
+def quit_server():
+    release_alt()
+    threading.Timer(0.4, lambda: os._exit(0)).start()   # lets the reply go out first
+
+
+POWER["quit"] = quit_server
 
 
 def dispatch(d):
@@ -668,9 +679,18 @@ def local_ip():
 
 
 if __name__ == "__main__":
-    print(f"\nOpen on your phone:  http://{local_ip()}:{PORT}")
+    url = f"http://{local_ip()}:{PORT}"
+    try:
+        server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
+    except OSError:
+        sys.exit(f"Phone Remote is already running (port {PORT} is in use).")
+
+    print(f"\nOpen on your phone:  {url}")
     if PIN == "1234":
         print("WARNING: PIN is still 1234. This remote controls your whole laptop,")
         print("         so change PIN at the top of this file.")
     print("Ctrl+C to stop\n")
-    ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
